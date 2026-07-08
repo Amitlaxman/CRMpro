@@ -28,10 +28,18 @@ class NormalizationService {
         let cleaned = phoneStr.replace(/[\s\-\(\)\.]/g, "");
         let countryCode = "";
         let mobileNumber = cleaned;
-        // Check for +91 or +1 or 0091 prefixes
-        if (cleaned.startsWith("+")) {
-            // Basic country code check (+ followed by 1 to 3 digits)
-            const match = cleaned.match(/^\+(\d{1,3})(\d+)$/);
+        // Check for explicit known prefixes
+        if (cleaned.startsWith("+91")) {
+            countryCode = "+91";
+            mobileNumber = cleaned.slice(3);
+        }
+        else if (cleaned.startsWith("+1")) {
+            countryCode = "+1";
+            mobileNumber = cleaned.slice(2);
+        }
+        else if (cleaned.startsWith("+")) {
+            // General country code check (+ followed by 1 to 2 digits)
+            const match = cleaned.match(/^\+(\d{1,2})(\d+)$/);
             if (match) {
                 countryCode = `+${match[1]}`;
                 mobileNumber = match[2];
@@ -82,6 +90,21 @@ class NormalizationService {
             }
         }
         return "";
+    }
+    /**
+     * Escape dangerous cell values to protect against CSV Injection.
+     */
+    static escapeCSVInjection(value) {
+        if (!value)
+            return "";
+        const trimmed = value.trim();
+        if (trimmed.startsWith("=") ||
+            trimmed.startsWith("+") ||
+            trimmed.startsWith("-") ||
+            trimmed.startsWith("@")) {
+            return `'${trimmed}`;
+        }
+        return value;
     }
 }
 exports.NormalizationService = NormalizationService;

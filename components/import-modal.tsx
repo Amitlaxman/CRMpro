@@ -35,6 +35,8 @@ interface ImportModalProps {
 
 type UploadState = "idle" | "uploading" | "processing" | "done"
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
+
 export function ImportModal({ isOpen, onClose, onConfirmImport }: ImportModalProps) {
   const {
     file,
@@ -141,7 +143,7 @@ export function ImportModal({ isOpen, onClose, onConfirmImport }: ImportModalPro
     formData.append("file", file)
 
     try {
-      const response = await fetch("http://localhost:5000/api/import/upload", {
+      const response = await fetch(`${API_BASE_URL}/api/import/upload`, {
         method: "POST",
         body: formData,
       })
@@ -176,7 +178,7 @@ export function ImportModal({ isOpen, onClose, onConfirmImport }: ImportModalPro
       "Building AI Context ✓",
     ])
 
-    const eventSource = new EventSource(`http://localhost:5000/api/import/stream?importId=${id}`)
+    const eventSource = new EventSource(`${API_BASE_URL}/api/import/stream?importId=${id}`)
 
     eventSource.onmessage = (event) => {
       try {

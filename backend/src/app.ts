@@ -33,7 +33,11 @@ app.use((req, res, next) => {
 app.use(helmet())
 
 // Whitelisted CORS policies
-const whitelist = ["http://localhost:3000", "https://crmpro-importer.vercel.app"]
+const whitelist = [
+  "http://localhost:3000",
+  "https://crmpro-importer.vercel.app",
+  "https://crmpro-amitlaxman.vercel.app"
+]
 if (process.env.CORS_ORIGIN) {
   if (process.env.CORS_ORIGIN === "*") {
     whitelist.push("*")
@@ -48,7 +52,7 @@ app.use(
       if (!origin || whitelist.includes("*") || whitelist.indexOf(origin) !== -1) {
         callback(null, true)
       } else {
-        callback(new Error("Blocked by CORS policy"))
+        callback(null, false)
       }
     },
   })

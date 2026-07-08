@@ -105,6 +105,7 @@ export class ExtractionService {
         const prevSkippedCount = skippedLeads.length
         const prevDuplicatesCount = duplicateLeads.length
 
+        let isCacheHit = false
         const cachedResponse = CacheService.getResponse(batchHash)
         if (cachedResponse) {
           console.log(`[Batch ${batchNum}/${totalBatches}] Cache Hit! Bypassing AI extraction.`)
@@ -115,6 +116,7 @@ export class ExtractionService {
             })}\n\n`
           )
           extraction = cachedResponse
+          isCacheHit = true
         } else {
           // Wrap execution in custom tracker to count retry attempts
           extraction = await RetryService.executeWithRetry(async () => {
@@ -215,7 +217,11 @@ export class ExtractionService {
           })}\n\n`
         )
 
-        await new Promise((resolve) => setTimeout(resolve, 150))
+        const cooldown = isCacheHit ? 150 : parseInt(process.env.BATCH_COOLDOWN_MS || "4500", 10)
+        if (!isCacheHit) {
+          console.log(`[Batch ${batchNum}/${totalBatches}] Respecting rate limit. Cooling down for ${cooldown}ms...`)
+        }
+        await new Promise((resolve) => setTimeout(resolve, cooldown))
       } catch (err: any) {
         console.error(`[Extraction Service] Batch ${batchNum} failed critically:`, err)
         writeAndFlush(

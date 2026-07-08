@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { X, Upload, Download, Loader2, CheckCircle2, ChevronRight, BarChart, Database, Sparkles, Clock, Zap } from "lucide-react"
+import { X, Upload, Download, Loader2, CheckCircle2, ChevronRight, BarChart, Database, Sparkles, Clock, Zap, AlertTriangle } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -83,6 +83,9 @@ export function ImportModal({ isOpen, onClose, onConfirmImport }: ImportModalPro
   // Handle Drag & Drop active states
   const [dragActive, setDragActive] = React.useState(false)
 
+  // Large file threshold detection (e.g. > 200 rows or > 1.5MB size)
+  const isLargeFile = file && (data.length > 200 || file.size > 1.5 * 1024 * 1024)
+
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
@@ -159,6 +162,10 @@ export function ImportModal({ isOpen, onClose, onConfirmImport }: ImportModalPro
         
         // Start streaming AI processing EventSource
         startAIStream(result.importId)
+
+        if (isLargeFile) {
+          toast.warning("Large file processing started. Running with rate-limit pacing cooldowns.")
+        }
       } else {
         const errMsg = result.error || "Failed to process CSV file."
         toast.error(errMsg)
@@ -638,21 +645,31 @@ export function ImportModal({ isOpen, onClose, onConfirmImport }: ImportModalPro
 
             {/* Modal Footer */}
             {uploadState !== "uploading" && uploadState !== "processing" && uploadState !== "done" && (
-              <div className="px-8 py-5 border-t border-border dark:border-[#2E2E33] bg-muted/40 dark:bg-zinc-900/30 flex items-center justify-between shrink-0">
-                <Button
-                  variant="outline"
-                  onClick={file ? handleReplace : handleModalClose}
-                  className="h-10 px-5 rounded-xl border-border dark:border-zinc-800 bg-white dark:bg-zinc-900 font-bold hover:bg-muted dark:hover:bg-zinc-800 text-sm shadow-xs cursor-pointer"
-                >
-                  {file ? "Replace File" : "Cancel"}
-                </Button>
-                <Button
-                  disabled={!file}
-                  onClick={handleConfirm}
-                  className="h-10 px-5 rounded-xl font-bold bg-primary hover:bg-primary/95 text-white disabled:opacity-50 shadow-sm cursor-pointer disabled:cursor-not-allowed text-sm"
-                >
-                  Confirm Import
-                </Button>
+              <div className="px-8 py-5 border-t border-border dark:border-[#2E2E33] bg-muted/40 dark:bg-zinc-900/30 flex items-center justify-between shrink-0 flex-wrap gap-4">
+                {isLargeFile ? (
+                  <div className="flex items-center gap-2 text-amber-600 dark:text-amber-500 text-xs font-semibold max-w-[60%] text-left">
+                    <AlertTriangle className="w-4.5 h-4.5 shrink-0 animate-pulse" />
+                    <span>Large file detected ({data.length} rows). Processing will take longer due to API rate-limit pacing.</span>
+                  </div>
+                ) : (
+                  <div />
+                )}
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={file ? handleReplace : handleModalClose}
+                    className="h-10 px-5 rounded-xl border-border dark:border-zinc-800 bg-white dark:bg-zinc-900 font-bold hover:bg-muted dark:hover:bg-zinc-800 text-sm shadow-xs cursor-pointer"
+                  >
+                    {file ? "Replace File" : "Cancel"}
+                  </Button>
+                  <Button
+                    disabled={!file}
+                    onClick={handleConfirm}
+                    className="h-10 px-5 rounded-xl font-bold bg-primary hover:bg-primary/95 text-white disabled:opacity-50 shadow-sm cursor-pointer disabled:cursor-not-allowed text-sm"
+                  >
+                    Confirm Import
+                  </Button>
+                </div>
               </div>
             )}
           </motion.div>

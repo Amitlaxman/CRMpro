@@ -21,6 +21,7 @@ interface ResultDashboardProps {
   mappingLogs?: any[]
   statistics?: any
   confidenceSummary?: any
+  fileName?: string
 }
 
 interface LeadRecord {
@@ -76,6 +77,7 @@ export function ResultDashboard({
   mappingLogs: propMappings,
   statistics: propStats,
   confidenceSummary: propConfidence,
+  fileName: propFileName,
 }: ResultDashboardProps) {
   
   // Tab Navigation with Local Storage persistence
@@ -149,7 +151,7 @@ export function ResultDashboard({
         if (prev.some((h) => h.importId === currentId)) return prev
         const newEntry: HistoryEntry = {
           importId: currentId,
-          filename: "leads_imported.csv",
+          filename: propFileName || "leads_imported.csv",
           timestamp: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" }),
           totalRecords: propStats.totalRows || 0,
           importedCount: propStats.importedCount || 0,
@@ -161,7 +163,7 @@ export function ResultDashboard({
         return updated
       })
     }
-  }, [propStats, propImported])
+  }, [propStats, propImported, propFileName])
 
   // Filter States
   const [searchTerm, setSearchTerm] = React.useState("")

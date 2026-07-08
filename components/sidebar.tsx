@@ -20,15 +20,7 @@ import { cn } from "@/lib/utils"
 
 const NAV_ITEMS = [
   { label: "Dashboard", icon: LayoutDashboard },
-  { label: "Generate Leads", icon: Zap },
   { label: "Manage Leads", icon: Users },
-  { label: "Lead Sources", icon: Database },
-  { label: "Ad Accounts", icon: Globe },
-  { label: "WhatsApp", icon: MessageSquare },
-  { label: "Tele Calling", icon: PhoneCall },
-  { label: "CRM Fields", icon: Sliders },
-  { label: "API Center", icon: Key },
-  { label: "Business Center", icon: Briefcase },
 ]
 
 interface SidebarProps {
@@ -53,21 +45,7 @@ export function Sidebar({ className }: SidebarProps) {
         <span className="font-bold text-lg tracking-tight text-foreground">CRMpro</span>
       </div>
 
-      {/* Company card */}
-      <div className="p-4 mx-2 my-3 rounded-xl border border-border dark:border-[#2E2E33] bg-muted/40 dark:bg-zinc-900/30 hover:bg-muted/70 dark:hover:bg-zinc-900/50 cursor-pointer transition-colors duration-150">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 flex items-center justify-center font-bold text-sm">
-              GE
-            </div>
-            <div className="flex flex-col text-left">
-              <span className="text-xs font-bold text-foreground leading-tight">GrowEasy</span>
-              <span className="text-[10px] text-muted-foreground leading-tight">Enterprise workspace</span>
-            </div>
-          </div>
-          <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
-        </div>
-      </div>
+
 
       {/* Navigation List */}
       <nav className="flex-1 px-3 py-2 space-y-1">

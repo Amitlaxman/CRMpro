@@ -10,8 +10,16 @@ export class ExtractionService {
   public static async streamExtraction(importId: string, res: Response): Promise<void> {
     const cached = CacheService.get(importId)
 
+    // Helper to send data and immediately flush Express buffers (e.g. from compression middleware)
+    const writeAndFlush = (dataString: string) => {
+      res.write(dataString)
+      if (typeof (res as any).flush === "function") {
+        ;(res as any).flush()
+      }
+    }
+
     if (!cached) {
-      res.write(`data: ${JSON.stringify({ type: "error", message: "Import session not found or expired." })}\n\n`)
+      writeAndFlush(`data: ${JSON.stringify({ type: "error", message: "Import session not found or expired." })}\n\n`)
       res.end()
       return
     }
@@ -20,12 +28,18 @@ export class ExtractionService {
     const totalBatches = batches.length
     const totalRecords = records.length
 
+    console.log(`\n=================== [Import Started] ===================`)
     console.log(`[Extraction Service] Streaming started for Import ID: ${importId}`)
+    console.log(`- File Name: ${cached.filename}`)
+    console.log(`- Total Records: ${totalRecords}`)
+    console.log(`- Total Batches: ${totalBatches}`)
+    console.log(`========================================================\n`)
 
     // Write SSE Headers
     res.setHeader("Content-Type", "text/event-stream")
     res.setHeader("Cache-Control", "no-cache")
     res.setHeader("Connection", "keep-alive")
+    res.setHeader("X-Accel-Buffering", "no") // Prevent buffering on reverse proxies like Nginx/Render
     res.flushHeaders()
 
     const importedLeads: CRMLead[] = []
@@ -68,10 +82,15 @@ export class ExtractionService {
       const batchNum = i + 1
       const batchStart = Date.now()
 
+      const startRow = i * batches[0].length + 1
+      const endRow = Math.min(startRow + currentBatch.length - 1, totalRecords)
+
+      console.log(`[Batch ${batchNum}/${totalBatches}] Starting (Rows ${startRow}-${endRow}, size: ${currentBatch.length})`)
+
       const batchDataString = JSON.stringify(currentBatch)
       const batchHash = crypto.createHash("sha256").update(batchDataString).digest("hex")
 
-      res.write(
+      writeAndFlush(
         `data: ${JSON.stringify({
           type: "log",
           message: `Processing Batch ${batchNum} of ${totalBatches}...`,
@@ -82,10 +101,14 @@ export class ExtractionService {
         let extraction: any
         let retriesCount = 0
 
+        const prevImportedCount = importedLeads.length
+        const prevSkippedCount = skippedLeads.length
+        const prevDuplicatesCount = duplicateLeads.length
+
         const cachedResponse = CacheService.getResponse(batchHash)
         if (cachedResponse) {
-          console.log(`[Extraction Service] Cache Hit for batch ${batchNum}! Bypassing AI extraction.`)
-          res.write(
+          console.log(`[Batch ${batchNum}/${totalBatches}] Cache Hit! Bypassing AI extraction.`)
+          writeAndFlush(
             `data: ${JSON.stringify({
               type: "log",
               message: `✓ Batch ${batchNum} resolved from response cache (Fast-path).`,
@@ -153,6 +176,18 @@ export class ExtractionService {
         const batchEnd = Date.now()
         const batchDuration = ((batchEnd - batchStart) / 1000).toFixed(2)
 
+        const importedInBatch = importedLeads.length - prevImportedCount
+        const skippedInBatch = skippedLeads.length - prevSkippedCount
+        const duplicatesInBatch = duplicateLeads.length - prevDuplicatesCount
+
+        console.log(`[Batch ${batchNum}/${totalBatches}] Completed in ${batchDuration}s | Imported: ${importedInBatch}, Skipped: ${skippedInBatch}, Duplicates: ${duplicatesInBatch}`)
+        if (skippedInBatch > 0) {
+          const newlySkipped = skippedLeads.slice(-skippedInBatch)
+          newlySkipped.forEach((s) => {
+            console.log(`  └─ ⚠ Row ${s.row} (${s.name}) skipped: ${s.reason}`)
+          })
+        }
+
         // Log performance metrics
         batchMetrics.push({
           batchNumber: batchNum,
@@ -168,7 +203,7 @@ export class ExtractionService {
           desc: `Processed ${currentBatch.length} rows in ${batchDuration}s`,
         })
 
-        res.write(
+        writeAndFlush(
           `data: ${JSON.stringify({
             type: "progress",
             batch: batchNum,
@@ -183,7 +218,7 @@ export class ExtractionService {
         await new Promise((resolve) => setTimeout(resolve, 150))
       } catch (err: any) {
         console.error(`[Extraction Service] Batch ${batchNum} failed critically:`, err)
-        res.write(
+        writeAndFlush(
           `data: ${JSON.stringify({
             type: "log",
             message: `⚠ Batch ${batchNum} failed critically. Skipping rows...`,
@@ -242,7 +277,15 @@ export class ExtractionService {
 
     CacheService.delete(importId)
 
-    res.write(
+    console.log(`\n=================== [Import Completed] ===================`)
+    console.log(`[Extraction Service] Successfully finalized Import ID: ${importId}`)
+    console.log(`- Final Success Rate: ${successRate}%`)
+    console.log(`- Total Imported: ${importedLeads.length}`)
+    console.log(`- Total Skipped: ${skippedLeads.length}`)
+    console.log(`- Total Duplicates: ${duplicateLeads.length}`)
+    console.log(`==========================================================\n`)
+
+    writeAndFlush(
       `data: ${JSON.stringify({
         type: "complete",
         result: finalResponse,

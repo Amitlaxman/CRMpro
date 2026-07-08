@@ -13,19 +13,33 @@ const csvAnalyzer_1 = require("./csvAnalyzer");
 class ExtractionService {
     static async streamExtraction(importId, res) {
         const cached = cache_service_1.CacheService.get(importId);
+        // Helper to send data and immediately flush Express buffers (e.g. from compression middleware)
+        const writeAndFlush = (dataString) => {
+            res.write(dataString);
+            if (typeof res.flush === "function") {
+                ;
+                res.flush();
+            }
+        };
         if (!cached) {
-            res.write(`data: ${JSON.stringify({ type: "error", message: "Import session not found or expired." })}\n\n`);
+            writeAndFlush(`data: ${JSON.stringify({ type: "error", message: "Import session not found or expired." })}\n\n`);
             res.end();
             return;
         }
         const { batches, headers, records } = cached;
         const totalBatches = batches.length;
         const totalRecords = records.length;
+        console.log(`\n=================== [Import Started] ===================`);
         console.log(`[Extraction Service] Streaming started for Import ID: ${importId}`);
+        console.log(`- File Name: ${cached.filename}`);
+        console.log(`- Total Records: ${totalRecords}`);
+        console.log(`- Total Batches: ${totalBatches}`);
+        console.log(`========================================================\n`);
         // Write SSE Headers
         res.setHeader("Content-Type", "text/event-stream");
         res.setHeader("Cache-Control", "no-cache");
         res.setHeader("Connection", "keep-alive");
+        res.setHeader("X-Accel-Buffering", "no"); // Prevent buffering on reverse proxies like Nginx/Render
         res.flushHeaders();
         const importedLeads = [];
         const skippedLeads = [];
@@ -61,19 +75,25 @@ class ExtractionService {
             const currentBatch = batches[i];
             const batchNum = i + 1;
             const batchStart = Date.now();
+            const startRow = i * batches[0].length + 1;
+            const endRow = Math.min(startRow + currentBatch.length - 1, totalRecords);
+            console.log(`[Batch ${batchNum}/${totalBatches}] Starting (Rows ${startRow}-${endRow}, size: ${currentBatch.length})`);
             const batchDataString = JSON.stringify(currentBatch);
             const batchHash = crypto_1.default.createHash("sha256").update(batchDataString).digest("hex");
-            res.write(`data: ${JSON.stringify({
+            writeAndFlush(`data: ${JSON.stringify({
                 type: "log",
                 message: `Processing Batch ${batchNum} of ${totalBatches}...`,
             })}\n\n`);
             try {
                 let extraction;
                 let retriesCount = 0;
+                const prevImportedCount = importedLeads.length;
+                const prevSkippedCount = skippedLeads.length;
+                const prevDuplicatesCount = duplicateLeads.length;
                 const cachedResponse = cache_service_1.CacheService.getResponse(batchHash);
                 if (cachedResponse) {
-                    console.log(`[Extraction Service] Cache Hit for batch ${batchNum}! Bypassing AI extraction.`);
-                    res.write(`data: ${JSON.stringify({
+                    console.log(`[Batch ${batchNum}/${totalBatches}] Cache Hit! Bypassing AI extraction.`);
+                    writeAndFlush(`data: ${JSON.stringify({
                         type: "log",
                         message: `✓ Batch ${batchNum} resolved from response cache (Fast-path).`,
                     })}\n\n`);
@@ -133,6 +153,16 @@ class ExtractionService {
                 totalProcessedRecords += currentBatch.length;
                 const batchEnd = Date.now();
                 const batchDuration = ((batchEnd - batchStart) / 1000).toFixed(2);
+                const importedInBatch = importedLeads.length - prevImportedCount;
+                const skippedInBatch = skippedLeads.length - prevSkippedCount;
+                const duplicatesInBatch = duplicateLeads.length - prevDuplicatesCount;
+                console.log(`[Batch ${batchNum}/${totalBatches}] Completed in ${batchDuration}s | Imported: ${importedInBatch}, Skipped: ${skippedInBatch}, Duplicates: ${duplicatesInBatch}`);
+                if (skippedInBatch > 0) {
+                    const newlySkipped = skippedLeads.slice(-skippedInBatch);
+                    newlySkipped.forEach((s) => {
+                        console.log(`  └─ ⚠ Row ${s.row} (${s.name}) skipped: ${s.reason}`);
+                    });
+                }
                 // Log performance metrics
                 batchMetrics.push({
                     batchNumber: batchNum,
@@ -146,7 +176,7 @@ class ExtractionService {
                     event: `Batch ${batchNum} Complete`,
                     desc: `Processed ${currentBatch.length} rows in ${batchDuration}s`,
                 });
-                res.write(`data: ${JSON.stringify({
+                writeAndFlush(`data: ${JSON.stringify({
                     type: "progress",
                     batch: batchNum,
                     totalBatches,
@@ -159,7 +189,7 @@ class ExtractionService {
             }
             catch (err) {
                 console.error(`[Extraction Service] Batch ${batchNum} failed critically:`, err);
-                res.write(`data: ${JSON.stringify({
+                writeAndFlush(`data: ${JSON.stringify({
                     type: "log",
                     message: `⚠ Batch ${batchNum} failed critically. Skipping rows...`,
                 })}\n\n`);
@@ -211,7 +241,14 @@ class ExtractionService {
             },
         };
         cache_service_1.CacheService.delete(importId);
-        res.write(`data: ${JSON.stringify({
+        console.log(`\n=================== [Import Completed] ===================`);
+        console.log(`[Extraction Service] Successfully finalized Import ID: ${importId}`);
+        console.log(`- Final Success Rate: ${successRate}%`);
+        console.log(`- Total Imported: ${importedLeads.length}`);
+        console.log(`- Total Skipped: ${skippedLeads.length}`);
+        console.log(`- Total Duplicates: ${duplicateLeads.length}`);
+        console.log(`==========================================================\n`);
+        writeAndFlush(`data: ${JSON.stringify({
             type: "complete",
             result: finalResponse,
         })}\n\n`);

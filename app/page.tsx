@@ -21,11 +21,12 @@ export default function Home() {
   const [mappingLogs, setMappingLogs] = React.useState<any[]>([])
   const [statistics, setStatistics] = React.useState<any>(null)
   const [confidenceSummary, setConfidenceSummary] = React.useState<any>(null)
+  const [fileName, setFileName] = React.useState<string>("")
 
   const handleConfirmImport = (
     imported: any[],
     mappings: any[],
-    fileName: string,
+    nameOfFile: string,
     duplicates: any[],
     skipped: any[],
     stats: any,
@@ -33,6 +34,7 @@ export default function Home() {
   ) => {
     setImportedLeads(imported)
     setMappingLogs(mappings)
+    setFileName(nameOfFile)
     setDuplicateLeads(duplicates)
     setSkippedLeads(skipped)
     setStatistics(stats)
@@ -45,6 +47,7 @@ export default function Home() {
   const handleRestart = () => {
     setImportedLeads([])
     setMappingLogs([])
+    setFileName("")
     setDuplicateLeads([])
     setSkippedLeads([])
     setStatistics(null)
@@ -121,6 +124,7 @@ export default function Home() {
               mappingLogs={mappingLogs}
               statistics={statistics}
               confidenceSummary={confidenceSummary}
+              fileName={fileName}
             />
           )}
         </main>

@@ -33,9 +33,17 @@ app.use((req, res, next) => {
 app.use((0, helmet_1.default)());
 // Whitelisted CORS policies
 const whitelist = ["http://localhost:3000", "https://crmpro-importer.vercel.app"];
+if (process.env.CORS_ORIGIN) {
+    if (process.env.CORS_ORIGIN === "*") {
+        whitelist.push("*");
+    }
+    else {
+        whitelist.push(...process.env.CORS_ORIGIN.split(",").map((o) => o.trim()));
+    }
+}
 app.use((0, cors_1.default)({
     origin: (origin, callback) => {
-        if (!origin || whitelist.indexOf(origin) !== -1) {
+        if (!origin || whitelist.includes("*") || whitelist.indexOf(origin) !== -1) {
             callback(null, true);
         }
         else {

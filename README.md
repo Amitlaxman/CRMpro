@@ -47,37 +47,42 @@ Once a file is uploaded, the app parses it locally to show a virtualized preview
 ![preview table](image-2.png)
 *Figure 3: Fully responsive, scrollable preview table showing raw CSV data with sticky headers.*
 
-### Step 3: Import Results & Analytics Dashboard
-Upon completion, the dashboard displays imported data metrics, including analytics, skipped/duplicate rows, and cost tracking.
-
-![successful import](image-4.png)
-*Figure 4: Successful import confirmation page showing final summary metrics.*
-
-![dashboard](image-6.png)
-*Figure 5: Main analytics dashboard displaying import status overview, token costs, and processing stats.*
-
-![Analytics of leads](image-10.png)
-*Figure 6: Lead analytics charts showing distribution, data sources, and leads breakdown.*
-
-![dark mode support, not just in this dashboard but everywhere.](image-7.png)
-*Figure 7: Seamless dark-mode design system active across the dashboard and all views.*
-
-### Step 4: Batch Processing & SSE Streaming
+### Step 3: Batch Processing & SSE Streaming
 During backend import execution, the progress is streamed live to the UI using Server-Sent Events (SSE).
 
 ![live batch processing of AI pipeline](image-5.png)
-*Figure 8: Live streaming progress of the AI import pipeline, displaying real-time processing stats.*
+*Figure 4: Live streaming progress of the AI import pipeline, displaying real-time processing stats.*
+
+### Step 4: Import Results & Analytics Dashboard
+Upon completion, the dashboard displays imported data metrics, including analytics, skipped/duplicate rows, and cost tracking.
+
+![successful import](image-4.png)
+*Figure 5: Successful import confirmation page showing final summary metrics.*
+
+![dashboard](image-6.png)
+
+*Figure 6: Main analytics dashboard displaying import status overview, token costs, and processing stats.*
+
+![dark mode support, not just in this dashboard but everywhere.](image-7.png)
+
+*Figure 7: Seamless dark-mode design system active across the dashboard and all views.*
+
+![Analytics of leads](image-10.png)
+*Figure 8: Lead analytics charts showing distribution, data sources, and leads breakdown.*
 
 ### Step 5: Column Mapping & Cross-Verification
 After AI processing, the suggested column mappings are displayed. Users can review and cross-verify the mappings to ensure the AI aligned fields correctly.
 
 ![confirmation of mappings during extraction](image-9.png)
+
 *Figure 9: Interface to review, customize, and cross-verify column mappings.*
 
 ![logs of process done](image-11.png)
+
 *Figure 10: Real-time logs and processing status of data insertion.*
 
 ![extracted duplicates](image-8.png)
+
 *Figure 11: Dedicated view showcasing skipped duplicate records.*
 
 ---

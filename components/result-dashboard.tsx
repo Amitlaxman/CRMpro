@@ -362,25 +362,8 @@ export function ResultDashboard({
   }
 
   const handleDownloadPDF = () => {
-    toast.loading("Generating PDF processing report...", { id: "pdf-toast" })
-    setTimeout(() => {
-      toast.success("PDF Report generated & downloaded!", { id: "pdf-toast" })
-      const printContent = `
-        CRMpro Import Summary Report
-        ============================
-        Total Rows Parsed: ${statistics.totalRows}
-        Imported Leads: ${statistics.importedCount}
-        Skipped (Errors): ${statistics.skippedCount}
-        Duplicates Blocked: ${statistics.duplicatesCount}
-        Average AI Confidence: 94%
-        Success Rate: ${statistics.successRate}%
-      `
-      const blob = new Blob([printContent], { type: "application/pdf" })
-      const link = document.createElement("a")
-      link.href = URL.createObjectURL(blob)
-      link.download = `crmpro_import_report.txt`
-      link.click()
-    }, 1500)
+    toast.success("Opening print dialog...", { id: "pdf-toast" })
+    window.print()
   }
 
   const copyToClipboard = (text: string) => {
@@ -424,7 +407,7 @@ export function ResultDashboard({
           <h2 className="text-2xl font-bold tracking-tight">AI Import Dashboard</h2>
           <p className="text-muted-foreground text-sm">Review, filter, and export AI mapping outputs.</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2.5 no-print">
           <Button 
             variant="outline"
             onClick={handleDownloadPDF} 
@@ -504,7 +487,7 @@ export function ResultDashboard({
         {/* Left Side: Tables */}
         <div className="flex-1 w-full flex flex-col gap-4 border border-border dark:border-[#2E2E33] bg-white dark:bg-[#121214] rounded-xl p-5 shadow-xs transition-colors duration-200">
           
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border dark:border-zinc-800 pb-4">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border dark:border-zinc-800 pb-4 no-print">
             <div className="flex flex-wrap gap-1 bg-muted/65 dark:bg-zinc-900/30 p-1 border border-border/80 dark:border-zinc-800 rounded-xl">
               {(["imported", "skipped", "duplicates", "mapping", "analytics", "review", "logs"] as TabType[]).map((tab) => (
                 <button
@@ -558,7 +541,7 @@ export function ResultDashboard({
 
           {/* Search/Filters bar */}
           {activeTab === "imported" && (
-            <div className="flex flex-col sm:flex-row gap-3 items-center justify-between text-xs font-semibold">
+            <div className="flex flex-col sm:flex-row gap-3 items-center justify-between text-xs font-semibold no-print">
               <div className="relative w-full sm:max-w-xs">
                 <Search className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
                 <input

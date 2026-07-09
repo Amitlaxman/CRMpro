@@ -234,6 +234,87 @@ export function ResultDashboard({
     return []
   }, [propStats])
 
+  // Analytics Calculations
+  const analyticsData = React.useMemo(() => {
+    const totalLeads = leads.length || 1
+    
+    // Status counts
+    const statusCounts = {
+      SALE_DONE: 0,
+      GOOD_LEAD_FOLLOW_UP: 0,
+      DID_NOT_CONNECT: 0,
+      BAD_LEAD: 0,
+    }
+    
+    // City counts
+    const cityCounts: Record<string, number> = {}
+    
+    // Missing fields
+    let missingEmails = 0
+    let missingPhones = 0
+    
+    // Company counts
+    const companyCounts: Record<string, number> = {}
+    
+    // Confidence
+    let totalConfidence = 0
+
+    leads.forEach((l) => {
+      // Status
+      if (statusCounts[l.status] !== undefined) {
+        statusCounts[l.status]++
+      }
+      
+      // City
+      const city = l.city?.trim() || "Unknown"
+      cityCounts[city] = (cityCounts[city] || 0) + 1
+      
+      // Missing info
+      if (!l.email || l.email.trim() === "") missingEmails++
+      if (!l.phone || l.phone.trim() === "") missingPhones++
+      
+      // Company
+      const company = l.company?.trim() || "Unknown"
+      if (company !== "Unknown") {
+        companyCounts[company] = (companyCounts[company] || 0) + 1
+      }
+      
+      // Confidence
+      totalConfidence += l.confidence
+    })
+
+    // Pcts
+    const saleDonePct = (statusCounts.SALE_DONE / totalLeads) * 100
+    const goodLeadPct = (statusCounts.GOOD_LEAD_FOLLOW_UP / totalLeads) * 100
+    const didNotConnectPct = (statusCounts.DID_NOT_CONNECT / totalLeads) * 100
+    const badLeadPct = (statusCounts.BAD_LEAD / totalLeads) * 100
+
+    // Top Cities
+    const topCities = Object.entries(cityCounts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 3)
+
+    // Top Company
+    const sortedCompanies = Object.entries(companyCounts).sort((a, b) => b[1] - a[1])
+    const topCompany = sortedCompanies[0]?.[0] || "None"
+
+    // Avg Confidence
+    const avgConfidence = leads.length > 0 ? Math.round((totalConfidence / leads.length) * 10) / 10 : 0
+
+    return {
+      saleDonePct,
+      goodLeadPct,
+      didNotConnectPct,
+      badLeadPct,
+      topCities,
+      missingEmails,
+      missingPhones,
+      topCompany,
+      avgConfidence,
+    }
+  }, [leads])
+
   // Handle Manual Remappings Overrides
   const handleRemapColumn = (csvCol: string, targetCRMField: string) => {
     toast.loading(`Remapping field "${csvCol}" to "${targetCRMField}" on-the-fly...`, { id: "remap-toast" })
@@ -803,9 +884,18 @@ export function ResultDashboard({
                     <div className="relative w-28 h-28 shrink-0">
                       <svg viewBox="0 0 36 36" className="w-28 h-28 transform -rotate-90">
                         <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="#E5E7EB" strokeWidth="3" />
-                        <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="#10B981" strokeWidth="3" strokeDasharray="35 100" strokeDashoffset="0" />
-                        <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="#3B82F6" strokeWidth="3" strokeDasharray="45 100" strokeDashoffset="-35" />
-                        <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="#EF4444" strokeWidth="3" strokeDasharray="20 100" strokeDashoffset="-80" />
+                        {analyticsData.saleDonePct > 0 && (
+                          <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="#10B981" strokeWidth="3" strokeDasharray={`${analyticsData.saleDonePct} 100`} strokeDashoffset={0} />
+                        )}
+                        {analyticsData.goodLeadPct > 0 && (
+                          <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="#3B82F6" strokeWidth="3" strokeDasharray={`${analyticsData.goodLeadPct} 100`} strokeDashoffset={-analyticsData.saleDonePct} />
+                        )}
+                        {analyticsData.didNotConnectPct > 0 && (
+                          <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="#6B7280" strokeWidth="3" strokeDasharray={`${analyticsData.didNotConnectPct} 100`} strokeDashoffset={-(analyticsData.saleDonePct + analyticsData.goodLeadPct)} />
+                        )}
+                        {analyticsData.badLeadPct > 0 && (
+                          <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="#EF4444" strokeWidth="3" strokeDasharray={`${analyticsData.badLeadPct} 100`} strokeDashoffset={-(analyticsData.saleDonePct + analyticsData.goodLeadPct + analyticsData.didNotConnectPct)} />
+                        )}
                       </svg>
                       <div className="absolute inset-0 flex flex-col items-center justify-center">
                         <span className="text-sm font-bold text-foreground">Active</span>
@@ -814,9 +904,10 @@ export function ResultDashboard({
                     </div>
 
                     <div className="text-xs space-y-1.5 font-bold">
-                      <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-[#10B981]" /> SALE_DONE (35%)</div>
-                      <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-[#3B82F6]" /> GOOD_LEAD (45%)</div>
-                      <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-[#EF4444]" /> BAD_LEAD (20%)</div>
+                      <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-[#10B981]" /> SALE_DONE ({Math.round(analyticsData.saleDonePct)}%)</div>
+                      <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-[#3B82F6]" /> GOOD_LEAD ({Math.round(analyticsData.goodLeadPct)}%)</div>
+                      <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-[#6B7280]" /> DID_NOT_CONNECT ({Math.round(analyticsData.didNotConnectPct)}%)</div>
+                      <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-[#EF4444]" /> BAD_LEAD ({Math.round(analyticsData.badLeadPct)}%)</div>
                     </div>
                   </div>
                 </div>
@@ -824,43 +915,40 @@ export function ResultDashboard({
                 <div className="p-5 border border-border dark:border-zinc-850 rounded-xl bg-muted/10 dark:bg-zinc-900/10 space-y-4 text-left">
                   <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Top Detected Cities</h4>
                   <div className="space-y-2.5 text-xs font-semibold">
-                    <div>
-                      <div className="flex justify-between mb-1"><span>San Francisco</span><span>42 leads</span></div>
-                      <div className="w-full bg-muted dark:bg-zinc-800 h-2 rounded-full overflow-hidden">
-                        <div className="bg-primary h-full rounded-full" style={{ width: "80%" }} />
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex justify-between mb-1"><span>Scranton</span><span>28 leads</span></div>
-                      <div className="w-full bg-muted dark:bg-zinc-800 h-2 rounded-full overflow-hidden">
-                        <div className="bg-primary h-full rounded-full" style={{ width: "55%" }} />
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex justify-between mb-1"><span>Austin</span><span>15 leads</span></div>
-                      <div className="w-full bg-muted dark:bg-zinc-800 h-2 rounded-full overflow-hidden">
-                        <div className="bg-primary h-full rounded-full" style={{ width: "35%" }} />
-                      </div>
-                    </div>
+                    {analyticsData.topCities.length === 0 ? (
+                      <p className="text-muted-foreground italic text-xs font-medium py-4">No city data available in this batch.</p>
+                    ) : (
+                      analyticsData.topCities.map((city, idx) => {
+                        const pct = leads.length > 0 ? (city.count / leads.length) * 100 : 0
+                        return (
+                          <div key={idx}>
+                            <div className="flex justify-between mb-1"><span className="capitalize">{city.name}</span><span>{city.count} {city.count === 1 ? "lead" : "leads"}</span></div>
+                            <div className="w-full bg-muted dark:bg-zinc-800 h-2 rounded-full overflow-hidden">
+                              <div className="bg-primary h-full rounded-full" style={{ width: `${pct}%` }} />
+                            </div>
+                          </div>
+                        )
+                      })
+                    )}
                   </div>
                 </div>
 
                 <div className="md:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
                   <div className="p-3 border border-border dark:border-zinc-800 rounded-xl text-center">
                     <span className="text-[10px] text-muted-foreground font-bold uppercase">Missing Emails</span>
-                    <span className="block font-bold text-lg text-foreground mt-0.5">2</span>
+                    <span className="block font-bold text-lg text-foreground mt-0.5">{analyticsData.missingEmails}</span>
                   </div>
                   <div className="p-3 border border-border dark:border-zinc-800 rounded-xl text-center">
                     <span className="text-[10px] text-muted-foreground font-bold uppercase">Missing Phones</span>
-                    <span className="block font-bold text-lg text-foreground mt-0.5">0</span>
+                    <span className="block font-bold text-lg text-foreground mt-0.5">{analyticsData.missingPhones}</span>
                   </div>
                   <div className="p-3 border border-border dark:border-zinc-800 rounded-xl text-center">
                     <span className="text-[10px] text-muted-foreground font-bold uppercase">Top Company</span>
-                    <span className="block font-sm font-bold text-foreground mt-1 truncate">Dunder Mifflin</span>
+                    <span className="block font-sm font-bold text-foreground mt-1 truncate" title={analyticsData.topCompany}>{analyticsData.topCompany}</span>
                   </div>
                   <div className="p-3 border border-border dark:border-zinc-800 rounded-xl text-center">
                     <span className="text-[10px] text-muted-foreground font-bold uppercase">Avg Confidence</span>
-                    <span className="block font-bold text-lg text-foreground mt-0.5">94.3%</span>
+                    <span className="block font-bold text-lg text-foreground mt-0.5">{analyticsData.avgConfidence}%</span>
                   </div>
                 </div>
               </div>

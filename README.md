@@ -68,6 +68,7 @@ Upon completion, the dashboard displays imported data metrics, including analyti
 *Figure 7: Seamless dark-mode design system active across the dashboard and all views.*
 
 ![Analytics of leads](image-10.png)
+
 *Figure 8: Lead analytics charts showing distribution, data sources, and leads breakdown.*
 
 ### Step 5: Column Mapping & Cross-Verification

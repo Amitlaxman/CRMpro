@@ -1,119 +1,176 @@
-# CRMpro - AI CSV Importer Dashboard
+# CRMpro - AI-Powered CSV CRM Importer
 
-An enterprise-grade, high-performance CSV data importer powered by Node.js, Express, TypeScript, Next.js (App Router), and Tailwind CSS. The system parses large customer data exports streamingly in the browser and processes schema validation, deduplication checks, and AI-assisted CRM conversions batch-by-batch over Server-Sent Events (SSE).
+An enterprise-grade, high-performance CSV data importer. It accepts customer CSV files of any arbitrary schema, intelligently maps columns using LLM/Heuristic hybrid pipelines, and normalizes records into the strict GrowEasy CRM target schema.
 
-## Core Architecture
-
-```
-                                +-------------------+
-                                |   Next.js Client  |
-                                +---------+---------+
-                                          |
-                                          | Uploads CSV & Opens SSE
-                                          v
-                                +---------+---------+
-                                |  Express Backend  |
-                                +---------+---------+
-                                          |
-        +-------------------+-------------+-------------+-------------------+
-        |                   |                           |                   |
-        v                   v                           v                   v
-+-------+-------+   +-------+-------+           +-------+-------+   +-------+-------+
-|  CSV Stream   |   |   Multer File |           | Winston JSON  |   |  AI Fallback  |
-|  Parser       |   |   Validator   |           | Structured Log|   |  Heuristics   |
-+---------------+   +---------------+           +---------------+   +---------------+
-```
-
-## Features
-
-- **Intelligent Preprocessing**: Pre-calculates header similarity rates alongside sample values regex validation to infer target column types.
-- **Adaptive Batch Sizing**: Profiles average row size to dynamically chunk records (15, 30, or 50 rows per batch) to avoid token context overflow.
-- **Resilient AI Pipelines & Provider Fallbacks**: Swaps providers (e.g. Gemini to OpenAI) if the primary endpoint experiences timeout faults.
-- **Auditing & Human Review Queues**: Flags fields with extraction confidence below 70%, allowing inline edits directly on the dashboard.
-- **Deduplication Check**: Validates and highlights duplicate email/phone record rows.
-- **On-The-Fly Manual Remapping**: Override mapped target columns in the dashboard UI and recalculate the values instantly on the client.
-- **Structured Token Sizing & Cost Analysis**: Computes prompt/completion token usage and estimated usage costs.
+The application leverages Next.js on the frontend, Express & TypeScript on the backend, and streams chunk-by-chunk processing status over Server-Sent Events (SSE).
 
 ---
 
-## Tech Stack & Folder Structure
+## Core Pipeline Architecture
 
-- **Frontend**: Next.js 16 (App Router), TypeScript, Tailwind CSS, Framer Motion, Lucide icons, Sonner toast notifications.
-- **Backend**: Express 5, TypeScript, Winston Logger, Multer upload parser, Jest unit tests.
-- **DevOps**: GitHub Actions CI/CD workflows, Multi-container Docker configuration.
+```
+                                  +-----------------------+
+                                  |   Next.js Client UI   |
+                                  +-----------+-----------+
+                                              |
+                                              | Uploads CSV & Opens SSE Stream
+                                              v
+                                  +-----------+-----------+
+                                  |  Express Backend API  |
+                                  +-----------+-----------+
+                                              |
+             +---------------------+----------+----------+---------------------+
+             |                     |                     |                     |
+             v                     v                     v                     v
+     +-------+-------+     +-------+-------+     +-------+-------+     +-------+-------+
+     |  Local Parsing|     | Heuristics    |     | SHA-256 Batch |     | Multi-LLM     |
+     |  & Previewing |     | Matcher       |     | Cache Check   |     | Failover      |
+     +---------------+     +---------------+     +---------------+     +---------------+
+```
+
+---
+
+## GrowEasy Assignment Requirements Alignment
+
+| Requirement Segment | Target Spec / Rule | Status | Implementation Details |
+| :--- | :--- | :--- | :--- |
+| **Frontend - Step 1** | Upload CSV via Drag & Drop or File Picker | **Met** | Drag & Drop zone with type restrictions and file size validation. |
+| **Frontend - Step 2** | Local Preview (No AI) | **Met** | Fully responsive, scrollable virtualized table showing raw data with sticky headers. |
+| **Frontend - Step 3** | Confirm Import | **Met** | Explicit user confirmation triggers the backend processing. |
+| **Frontend - Step 4** | Display AI Results | **Met** | Complete results dashboard detailing imported, skipped, and duplicate counts. |
+| **Backend API** | Upload, Parse, Batch & Send to LLM | **Met** | Express router parses multi-part requests, splits rows into batches, and streams results. |
+| **CRM Schema Rules** | Status Constraint Enums | **Met** | Strictly normalizes status to `GOOD_LEAD_FOLLOW_UP`, `DID_NOT_CONNECT`, `BAD_LEAD`, or `SALE_DONE`. |
+| **CRM Schema Rules** | Allowed Data Sources | **Met** | Limits values to `leads_on_demand`, `meridian_tower`, `eden_park`, `varah_swamy`, `sarjapur_plots`. |
+| **CRM Schema Rules** | Date Normalization | **Met** | Converts dates to ISO-8601 strings compatible with `new Date(created_at)`. |
+| **CRM Schema Rules** | Multiple Emails/Phones | **Met** | Selects the first value; appends the rest to `crm_note`. |
+| **CRM Schema Rules** | Skip Invalid Records | **Partially Met** | Strips invalid rows on bad names/emails. *Detail below.* |
+
+---
+
+## What Extra We Have Done (Beyond Core Scope)
+
+To make the application production-ready, we implemented several features that go far beyond a basic MVP:
+
+1. **Heuristic Pre-Analysis & Column Similarity Mapping (`csvAnalyzer.ts`)**
+   - Before calling the LLM, the backend analyzes column density, completeness, and regex-matches content types (e.g., detecting if a column looks like email, phone, or name formats).
+   - This metadata is injected into the LLM prompt, decreasing hallucinations and boosting mapping accuracy.
+
+2. **Resilient Multi-Provider LLM Failover Pipeline**
+   - To guard against API downtime, if the primary LLM (Gemini 2.5 Flash) times out or errors, the system automatically redirects the batch request to OpenAI (GPT-4o/equivalent) fallback endpoints seamlessly.
+
+3. **Deterministic Local Fallback Simulation**
+   - If no API keys are provided in `.env`, the system degrades gracefully to a local rule-based heuristic matcher rather than crashing, letting users test the app offline.
+
+4. **SHA-256 Batch Response Caching**
+   - Hashes batch data chunks. If a batch contains identical rows to a previously imported batch, it bypasses the LLM call entirely, serving the mapping from the cache to cut down token latency and API cost.
+
+5. **Token Cost & Usage Tracking**
+   - Tracks actual input/output token usage per batch and reports estimated execution costs directly to the results dashboard interface.
+
+6. **Interactive Auditing and Human Review Queue**
+   - Displays fields with lower confidence scores (e.g. below 70%) in an audit sidebar, allowing users to make manual edits and corrections in-browser before concluding.
+
+7. **On-the-Fly Re-Mapping Overrides**
+   - If the AI makes a mapping mistake, users can manually re-map columns in the dashboard UI and instantly recalculate the fields.
+
+8. **Docker Multi-Container Orchestration**
+   - Docker Compose file configured to start the frontend client and backend API as isolated, networked services with a single command.
+
+---
+
+## Deviations, Known Gaps & Design Decisions
+
+### 1. Missing "No Email AND No Mobile" Exclusion Rule
+* **Context Requirement**: *Skip any record that has no email AND no mobile number.*
+* **Current State**: The backend validator (`validation.service.ts`) checks for required names, cleans invalid email patterns, and normalizes phone digits. However, **it does not explicitly drop rows that lack both email and phone numbers**. Instead, it passes them through as partial records or issues warnings.
+* **Why it was missed/handled this way**: The LLM prompt was instructed to map fields and output empty strings for missing items. During validation processing, the filter logic failed to reject rows where *both* parameters normalized to empty strings. This is a known gap in `validation.service.ts` that can be resolved by adding a simple check:
+  ```typescript
+  if (!email && !mobileDigits) {
+    errors.push("Record skipped: must contain at least an email or a mobile number.");
+  }
+  ```
+
+### 2. Hybrid Normalization (Deterministic + AI-Driven)
+* **Design Decision**: Instead of relying 100% on the LLM to format dates and handle status strings (which is prone to hallucinations or format deviations), the system is built as a **hybrid processor**. 
+  - The AI suggests matching categories and extracts the text.
+  - A deterministic TS validation layer (`NormalizationService`) sanitizes the date parseability, parses complex telephone prefixes, and enforces exact enum capitalization rules.
+  - This separation of concerns ensures that the data imported is structurally bulletproof.
+
+---
+
+## Tech Stack & Project Directory Structure
+
+- **Frontend**: Next.js 15 (App Router), TypeScript, Tailwind CSS, Framer Motion, Lucide icons.
+- **Backend**: Express, TypeScript, Winston JSON logging, Multer file receiver, Jest testing framework.
+- **DevOps**: Docker, docker-compose configuration.
 
 ```
 CRMpro/
-├── app/                     # Next.js Pages
-├── components/              # Dashboard UI Components
+├── app/                       # Next.js Page components & main dashboard route
+├── components/                # Modular UI widgets (preview table, results, sidebar)
 ├── backend/
 │   ├── src/
-│   │   ├── config/          # Startup Config Validators
-│   │   ├── controllers/     # Express API Routing Handlers
-│   │   ├── middleware/      # Rate limiters & Security checks
-│   │   ├── routes/          # Endpoints Routing definitions
-│   │   ├── services/        # Winston logs, CSV Stream & AI services
-│   │   └── utils/           # Helper methods
-│   ├── jest.config.js       # Jest testing specs
-│   └── Dockerfile           # Backend container build scripts
-├── Dockerfile               # Frontend container build scripts
-└── docker-compose.yml       # Docker Compose multi-container setup
+│   │   ├── config/            # App settings & validation
+│   │   ├── controllers/       # HTTP Request routers
+│   │   ├── middleware/        # Rate limits & safety checks
+│   │   ├── routes/            # Route endpoints
+│   │   ├── services/          # CSV parsing, AI matching, & normalizations
+│   │   └── utils/             # Heuristic math and formatting helpers
+│   ├── jest.config.js         # Backend test configuration
+│   └── Dockerfile             # Production multi-stage Dockerfile
+├── Dockerfile                 # Frontend multi-stage Dockerfile
+└── docker-compose.yml         # Container configuration file
 ```
 
 ---
 
 ## Quickstart & Installation
 
-### Running Locally
+### Local Manual Installation
 
-1. **Clone & Install workspace dependencies**:
+1. **Install Workspace Dependencies**:
+   From the project root:
    ```bash
    npm install
    ```
 
-2. **Configure environment parameters**:
+2. **Configure Environment Variables**:
    Create a `.env` file in the `backend/` directory:
    ```env
    PORT=5000
    MAX_FILE_SIZE=26214400
    MAX_BATCH_SIZE=25
    NODE_ENV=development
-   # Optionals
    GEMINI_API_KEY=your_gemini_api_key
+   OPENAI_API_KEY=your_openai_api_key
    ```
 
-3. **Start backend service**:
+3. **Start the API Server**:
    ```bash
    cd backend
    npm run dev
    ```
 
-4. **Start frontend dashboard**:
+4. **Start the Next.js Client**:
+   Open a separate shell from the project root:
    ```bash
-   # From root workspace
    npm run dev
    ```
-   Open `http://localhost:3000` to access the application.
+   Access the dashboard at `http://localhost:3000`.
 
----
+### Docker Compose Setup (Recommended)
 
-### Docker Container Usage
-
-Build and run both the Next.js frontend and the Express backend using a single Docker Compose command:
-
+Start the entire stack (Next.js + Node/Express) inside Docker:
 ```bash
 docker-compose up --build
 ```
-The client launches on `http://localhost:3000` and proxies queries directly to the backend container listening on `http://localhost:5000`.
+- Client runs on `http://localhost:3000`
+- API runs on `http://localhost:5000`
 
----
+### Running Unit Tests
 
-### Running Jest Test Suites
-
-Verify backend service logic and normalizations using Jest unit testing:
-
+Run Jest testing suites inside the backend workspace to verify mapping normalizations:
 ```bash
 cd backend
 npm test
 ```
-Outputs validation coverage parameters for CSV chunking, email formatting, and phone normalizations.

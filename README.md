@@ -2,6 +2,10 @@
 
 An enterprise-grade, high-performance CSV data importer. It accepts customer CSV files of any arbitrary schema, intelligently maps columns using LLM/Heuristic hybrid pipelines, and normalizes records into the strict GrowEasy CRM target schema.
 
+**Live Deployments:**
+- **Frontend client (Vercel):** [https://crmpro-amitlaxman.vercel.app/](https://crmpro-amitlaxman.vercel.app/)
+- **Backend API (Render):** [https://crmpro-q94j.onrender.com](https://crmpro-q94j.onrender.com)
+
 The application leverages Next.js on the frontend, Express & TypeScript on the backend, and streams chunk-by-chunk processing status over Server-Sent Events (SSE).
 
 ---
@@ -57,6 +61,7 @@ Upon completion, the dashboard displays imported data metrics, including analyti
 *Figure 5: Main analytics dashboard displaying import status overview, token costs, and processing stats.*
 
 ![Analytics of leads](image-10.png)
+
 *Figure 6: Lead analytics charts showing distribution, data sources, and leads breakdown.*
 
 ![dark mode support, not just in this dashboard but everywhere.](image-7.png)
@@ -85,6 +90,9 @@ After AI processing, the suggested column mappings are displayed. Users can revi
 Apart from the primary steps, the application also contains a **Human Review section** for low-confidence mappings and a **Skipped Rows section** for records failing formatting requirements.
 
 We used the Kaggle Sample Sales CRM Data for this Assignment: [Kaggle Sample Sales CRM dataset](https://www.kaggle.com/datasets/sushicatsan/sample-sales-crm-data?resource=download)
+
+![kaggle crm dataset](image-12.png)
+*Figure 12: Source structure of the Kaggle Sample Sales CRM dataset.*
 
 ---
 
@@ -184,11 +192,16 @@ CRMpro/
 
 ## Quickstart, Installation & Deployment
 
-### Live Backend Deployment
-The backend API is deployed and running live on Render.
+### Live Production Deployments
+The application is fully deployed and accessible live:
+- **Frontend Client:** [https://crmpro-amitlaxman.vercel.app/](https://crmpro-amitlaxman.vercel.app/)
+- **Backend API:** [https://crmpro-q94j.onrender.com](https://crmpro-q94j.onrender.com)
+
+![vercel crmpro deployment](image-13.png)
+*Figure 13: CRMpro frontend dashboard deployed live on Vercel.*
 
 ![live backend on render](image-3.png)
-*Figure 12: CRMpro Express backend API running live on Render.*
+*Figure 14: CRMpro Express backend API running live on Render.*
 
 ### Local Manual Installation
 
@@ -238,4 +251,3 @@ Run Jest testing suites inside the backend workspace to verify mapping normaliza
 cd backend
 npm test
 ```
-

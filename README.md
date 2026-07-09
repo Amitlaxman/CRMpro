@@ -6,7 +6,7 @@ Instead of forcing you to rename columns manually, CRMpro uses a blend of smart 
 
 **NOW live:**
 - **Frontend Client (Vercel):** [https://crmpro-amitlaxman.vercel.app/](https://crmpro-amitlaxman.vercel.app/)
-- **Backend API (Render):** [https://crmpro-q94j.onrender.com](https://crmpro-q94j.onrender.com)
+- **Backend API (Render):** [https://crmpro-q94j.onrender.com](https://crmpro-q94j.onrender.com) *(Note: Since this runs on Render's free tier, the server spins down after inactivity. It may take up to 50 seconds to boot back up on your first request).*
 
 ---
 
@@ -200,7 +200,7 @@ CRMpro/
 ### Live Production Deployments
 The application is fully deployed and accessible live:
 - **Frontend Client:** [https://crmpro-amitlaxman.vercel.app/](https://crmpro-amitlaxman.vercel.app/)
-- **Backend API:** [https://crmpro-q94j.onrender.com](https://crmpro-q94j.onrender.com)
+- **Backend API:** [https://crmpro-q94j.onrender.com](https://crmpro-q94j.onrender.com) *(Note: Render's free tier spins down after inactivity; please allow ~50 seconds for the backend instance to spin up on your first visit).*
 
 ![vercel crmpro deployment](image-13.png)
 *Figure 13: CRMpro frontend dashboard deployed live on Vercel.*

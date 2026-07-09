@@ -47,17 +47,17 @@ Once a file is uploaded, the app parses it locally to show a virtualized preview
 ![preview table](image-2.png)
 *Figure 3: Fully responsive, scrollable preview table showing raw CSV data with sticky headers.*
 
-### Step 3: Column Mapping & Confirmation
-Users can review the mapping suggested by the backend heuristic pipeline and make manual adjustments as needed before triggering the final import.
-
-![confirmation of mappings during extraction](image-9.png)
-*Figure 4: Interface to review, customize, and confirm column mappings.*
-
-### Step 4: Batch Processing & SSE Streaming
+### Step 3: Batch Processing & SSE Streaming
 During backend import execution, the progress is streamed live to the UI using Server-Sent Events (SSE).
 
 ![live batch processing of AI pipeline](image-5.png)
-*Figure 5: Live streaming progress of the AI import pipeline, displaying real-time processing stats.*
+*Figure 4: Live streaming progress of the AI import pipeline, displaying real-time processing stats.*
+
+### Step 4: Column Mapping & Cross-Verification
+After AI processing, the suggested column mappings are displayed. Users can review and cross-verify the mappings to ensure the AI aligned fields correctly.
+
+![confirmation of mappings during extraction](image-9.png)
+*Figure 5: Interface to review, customize, and cross-verify column mappings.*
 
 ![logs of process done](image-11.png)
 *Figure 6: Real-time logs and processing status of data insertion.*

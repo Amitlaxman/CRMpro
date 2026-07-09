@@ -234,19 +234,6 @@ export function ResultDashboard({
     return []
   }, [propStats])
 
-  // Token usage calculator mock
-  const tokenStats = React.useMemo(() => {
-    const promptTokens = statistics.totalRows * 180 + 1200
-    const completionTokens = statistics.importedCount * 250
-    const estimatedCost = parseFloat(((promptTokens / 1000000) * 5.0 + (completionTokens / 1000000) * 15.0).toFixed(3))
-
-    return {
-      promptTokens,
-      completionTokens,
-      estimatedCost,
-    }
-  }, [statistics])
-
   // Handle Manual Remappings Overrides
   const handleRemapColumn = (csvCol: string, targetCRMField: string) => {
     toast.loading(`Remapping field "${csvCol}" to "${targetCRMField}" on-the-fly...`, { id: "remap-toast" })
@@ -1052,31 +1039,6 @@ export function ResultDashboard({
 
         {/* Right Side: Auditing sidebar */}
         <div className="w-full lg:w-80 space-y-6">
-          {/* AI Cost Widget */}
-          <Card className="border-border dark:border-[#2E2E33] shadow-xs bg-white dark:bg-[#121214] rounded-xl transition-colors duration-200">
-            <CardHeader className="p-5 border-b border-border dark:border-zinc-800">
-              <CardTitle className="text-sm font-bold flex items-center gap-1.5">
-                <Landmark className="w-4 h-4 text-primary shrink-0" />
-                <span>AI Operational Costs</span>
-              </CardTitle>
-              <CardDescription className="text-xs">Estimated token sizing calculations based on GPT-4 pricing.</CardDescription>
-            </CardHeader>
-            <CardContent className="p-5 space-y-3.5 text-xs font-semibold">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Prompt Tokens:</span>
-                <span className="text-foreground">{tokenStats.promptTokens.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between border-t border-border/60 dark:border-zinc-800/60 pt-2">
-                <span className="text-muted-foreground">Completion Tokens:</span>
-                <span className="text-foreground">{tokenStats.completionTokens.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between border-t border-border/60 dark:border-zinc-800/60 pt-2">
-                <span className="text-primary">Estimated Cost:</span>
-                <span className="text-primary font-bold">${tokenStats.estimatedCost}</span>
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Import History */}
           <Card className="border-border dark:border-[#2E2E33] shadow-xs bg-white dark:bg-[#121214] rounded-xl transition-colors duration-200">
             <CardHeader className="p-5 border-b border-border dark:border-zinc-800">

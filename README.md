@@ -61,14 +61,14 @@ During backend import execution, the progress is streamed live to the UI using S
 *Figure 4: Live streaming progress of the AI import pipeline, displaying real-time processing stats.*
 
 ### Step 4: Import Results & Analytics Dashboard
-Upon completion, the dashboard displays imported data metrics, including analytics, skipped/duplicate rows, and cost tracking.
+Upon completion, the dashboard displays imported data metrics, including analytics and skipped/duplicate rows.
 
 ![successful import](image-4.png)
 *Figure 5: Successful import confirmation page showing final summary metrics.*
 
 ![dashboard](image-6.png)
 
-*Figure 6: Main analytics dashboard displaying import status overview, token costs, and processing stats.*
+*Figure 6: Main analytics dashboard displaying import status overview and processing stats.*
 
 ![dark mode support, not just in this dashboard but everywhere.](image-7.png)
 
@@ -138,16 +138,13 @@ To make the application production-ready, I implemented several features that go
 4. **SHA-256 Batch Response Caching**
    - Hashes batch data chunks. If a batch contains identical rows to a previously imported batch, it bypasses the LLM call entirely, serving the mapping from the cache to cut down token latency and API cost.
 
-5. **Token Cost & Usage Tracking**
-   - Tracks actual input/output token usage per batch and reports estimated execution costs directly to the results dashboard interface.
-
-6. **Interactive Auditing and Human Review Queue**
+5. **Interactive Auditing and Human Review Queue**
    - Displays fields with lower confidence scores (e.g. below 70%) in an audit sidebar, allowing users to make manual edits and corrections in-browser before concluding.
 
-7. **On-the-Fly Re-Mapping Overrides**
+6. **On-the-Fly Re-Mapping Overrides**
    - If the AI makes a mapping mistake, users can manually re-map columns in the dashboard UI and instantly recalculate the fields.
 
-8. **Docker Multi-Container Orchestration**
+7. **Docker Multi-Container Orchestration**
    - Docker Compose file configured to start the frontend client and backend API as isolated, networked services with a single command.
 
 ---

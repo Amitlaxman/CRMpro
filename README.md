@@ -1,12 +1,12 @@
 # CRMpro - AI-Powered CSV CRM Importer
 
-An enterprise-grade, high-performance CSV data importer. It accepts customer CSV files of any arbitrary schema, intelligently maps columns using LLM/Heuristic hybrid pipelines, and normalizes records into the strict GrowEasy CRM target schema.
+**CRMpro** is a smart tool designed to import customer data from any CSV file directly into your CRM database, regardless of how the file's columns are named. 
+
+Instead of forcing you to rename columns manually, CRMpro uses a blend of smart rule-matching (heuristics) and AI to figure out which column belongs where (e.g., matching "cellphone" or "phone_no" to the CRM's standard "Mobile" field). It then sanitizes dates, checks for duplicates, flags errors, and streams the import progress to you in real time.
 
 **Live Deployments:**
-- **Frontend client (Vercel):** [https://crmpro-amitlaxman.vercel.app/](https://crmpro-amitlaxman.vercel.app/)
+- **Frontend Client (Vercel):** [https://crmpro-amitlaxman.vercel.app/](https://crmpro-amitlaxman.vercel.app/)
 - **Backend API (Render):** [https://crmpro-q94j.onrender.com](https://crmpro-q94j.onrender.com)
-
-The application leverages Next.js on the frontend, Express & TypeScript on the backend, and streams chunk-by-chunk processing status over Server-Sent Events (SSE).
 
 ---
 
@@ -54,6 +54,9 @@ Once a file is uploaded, the app parses it locally to show a virtualized preview
 ### Step 3: Batch Processing & SSE Streaming
 During backend import execution, the progress is streamed live to the UI using Server-Sent Events (SSE).
 
+> [!NOTE]
+> **Performance & Rate Limits:** Because the application currently runs on the **free tier of Gemini and OpenAI APIs**, larger CSV files are split into small batches and processed with safety delays to avoid hitting rate limits. This means larger imports will process slowly. Upgrading to paid API tiers in production will remove these restrictions and allow rapid, concurrent batch imports.
+
 ![live batch processing of AI pipeline](image-5.png)
 *Figure 4: Live streaming progress of the AI import pipeline, displaying real-time processing stats.*
 
@@ -94,7 +97,7 @@ After AI processing, the suggested column mappings are displayed. Users can revi
 
 Apart from the primary steps, the application also contains a **Human Review section** for low-confidence mappings and a **Skipped Rows section** for records failing formatting requirements.
 
-We used the Kaggle Sample Sales CRM Data for this Assignment: [Kaggle Sample Sales CRM dataset](https://www.kaggle.com/datasets/sushicatsan/sample-sales-crm-data?resource=download)
+I used the Kaggle Sample Sales CRM Data for this Assignment: [Kaggle Sample Sales CRM dataset](https://www.kaggle.com/datasets/sushicatsan/sample-sales-crm-data?resource=download)
 
 ![kaggle crm dataset](image-12.png)
 *Figure 12: Source structure of the Kaggle Sample Sales CRM dataset.*
@@ -120,7 +123,7 @@ We used the Kaggle Sample Sales CRM Data for this Assignment: [Kaggle Sample Sal
 
 ## What Extra I Have Done (Beyond Core Scope)
 
-To make the application production-ready, we implemented several features that go far beyond a basic MVP:
+To make the application production-ready, I implemented several features that go far beyond a basic MVP:
 
 1. **Heuristic Pre-Analysis & Column Similarity Mapping (`csvAnalyzer.ts`)**
    - Before calling the LLM, the backend analyzes column density, completeness, and regex-matches content types (e.g., detecting if a column looks like email, phone, or name formats).

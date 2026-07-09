@@ -4,7 +4,7 @@
 
 Instead of forcing you to rename columns manually, CRMpro uses a blend of smart rule-matching (heuristics) and AI to figure out which column belongs where (e.g., matching "cellphone" or "phone_no" to the CRM's standard "Mobile" field). It then sanitizes dates, checks for duplicates, flags errors, and streams the import progress to you in real time.
 
-**Live Deployments:**
+**NOW live:**
 - **Frontend Client (Vercel):** [https://crmpro-amitlaxman.vercel.app/](https://crmpro-amitlaxman.vercel.app/)
 - **Backend API (Render):** [https://crmpro-q94j.onrender.com](https://crmpro-q94j.onrender.com)
 

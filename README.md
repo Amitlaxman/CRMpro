@@ -30,6 +30,64 @@ The application leverages Next.js on the frontend, Express & TypeScript on the b
 
 ---
 
+## User Interface & Import Walkthrough
+
+### Step 1: File Upload & Drag-and-Drop
+The user interface starts with a clean, modern landing page supporting drag-and-drop CSV uploads.
+
+![simple homepage](image.png)
+*Figure 1: CRMpro landing page showcasing the simple, modern upload interface.*
+
+![drag and drop uploads](image-1.png)
+*Figure 2: Interactive drag-and-drop zone with type restrictions and file validation.*
+
+### Step 2: Local Parsing & Preview
+Once a file is uploaded, the app parses it locally to show a virtualized preview table before any AI matching or backend requests are initiated.
+
+![preview table](image-2.png)
+*Figure 3: Fully responsive, scrollable preview table showing raw CSV data with sticky headers.*
+
+### Step 3: Column Mapping & Confirmation
+Users can review the mapping suggested by the backend heuristic pipeline and make manual adjustments as needed before triggering the final import.
+
+![confirmation of mappings during extraction](image-9.png)
+*Figure 4: Interface to review, customize, and confirm column mappings.*
+
+### Step 4: Batch Processing & SSE Streaming
+During backend import execution, the progress is streamed live to the UI using Server-Sent Events (SSE).
+
+![live batch processing of AI pipeline](image-5.png)
+*Figure 5: Live streaming progress of the AI import pipeline, displaying real-time processing stats.*
+
+![logs of process done](image-11.png)
+*Figure 6: Real-time logs and processing status of data insertion.*
+
+### Step 5: Import Results & Analytics Dashboard
+Upon completion, the dashboard displays imported data metrics, including analytics, skipped/duplicate rows, and cost tracking.
+
+![successful import](image-4.png)
+*Figure 7: Successful import confirmation page showing final summary metrics.*
+
+![dashboard](image-6.png)
+*Figure 8: Main analytics dashboard displaying import status overview, token costs, and processing stats.*
+
+![Analytics of leads](image-10.png)
+*Figure 9: Lead analytics charts showing distribution, data sources, and leads breakdown.*
+
+![dark mode support, not just in this dashboard but everywhere.](image-7.png)
+*Figure 10: Seamless dark-mode design system active across the dashboard and all views.*
+
+![extracted duplicates](image-8.png)
+*Figure 11: Dedicated view showcasing skipped duplicate records.*
+
+---
+
+Apart from the primary steps, the application also contains a **Human Review section** for low-confidence mappings and a **Skipped Rows section** for records failing formatting requirements.
+
+We used the Kaggle Sample Sales CRM Data for this Assignment: [Kaggle Sample Sales CRM dataset](https://www.kaggle.com/datasets/sushicatsan/sample-sales-crm-data?resource=download)
+
+---
+
 ## GrowEasy Assignment Requirements Alignment
 
 | Requirement Segment | Target Spec / Rule | Status | Implementation Details |
@@ -124,7 +182,13 @@ CRMpro/
 
 ---
 
-## Quickstart & Installation
+## Quickstart, Installation & Deployment
+
+### Live Backend Deployment
+The backend API is deployed and running live on Render.
+
+![live backend on render](image-3.png)
+*Figure 12: CRMpro Express backend API running live on Render.*
 
 ### Local Manual Installation
 
@@ -174,3 +238,4 @@ Run Jest testing suites inside the backend workspace to verify mapping normaliza
 cd backend
 npm test
 ```
+

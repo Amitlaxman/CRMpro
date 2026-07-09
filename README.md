@@ -111,7 +111,7 @@ We used the Kaggle Sample Sales CRM Data for this Assignment: [Kaggle Sample Sal
 
 ---
 
-## What Extra We Have Done (Beyond Core Scope)
+## What Extra I Have Done (Beyond Core Scope)
 
 To make the application production-ready, we implemented several features that go far beyond a basic MVP:
 
@@ -142,7 +142,7 @@ To make the application production-ready, we implemented several features that g
 
 ---
 
-## Deviations, Known Gaps & Design Decisions
+## Deviations & Design Decisions
 
 ### 1. Missing "No Email AND No Mobile" Exclusion Rule
 * **Context Requirement**: *Skip any record that has no email AND no mobile number.*

@@ -121,9 +121,9 @@ I used the Kaggle Sample Sales CRM Data for this Assignment: [Kaggle Sample Sale
 
 ---
 
-## What Extra I Have Done (Beyond Core Scope)
+## What Extra I've Done
 
-To make the application production-ready, I implemented several features that go far beyond a basic MVP:
+To make the application production-ready, I implemented several features that go far beyond a basic MVP, that sets me apart:
 
 1. **Heuristic Pre-Analysis & Column Similarity Mapping (`csvAnalyzer.ts`)**
    - Before calling the LLM, the backend analyzes column density, completeness, and regex-matches content types (e.g., detecting if a column looks like email, phone, or name formats).

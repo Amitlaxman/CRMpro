@@ -104,23 +104,6 @@ I used the Kaggle Sample Sales CRM Data for this Assignment: [Kaggle Sample Sale
 
 ---
 
-## GrowEasy Assignment Requirements Alignment
-
-| Requirement Segment | Target Spec / Rule | Status | Implementation Details |
-| :--- | :--- | :--- | :--- |
-| **Frontend - Step 1** | Upload CSV via Drag & Drop or File Picker | **Met** | Drag & Drop zone with type restrictions and file size validation. |
-| **Frontend - Step 2** | Local Preview (No AI) | **Met** | Fully responsive, scrollable virtualized table showing raw data with sticky headers. |
-| **Frontend - Step 3** | Confirm Import | **Met** | Explicit user confirmation triggers the backend processing. |
-| **Frontend - Step 4** | Display AI Results | **Met** | Complete results dashboard detailing imported, skipped, and duplicate counts. |
-| **Backend API** | Upload, Parse, Batch & Send to LLM | **Met** | Express router parses multi-part requests, splits rows into batches, and streams results. |
-| **CRM Schema Rules** | Status Constraint Enums | **Met** | Strictly normalizes status to `GOOD_LEAD_FOLLOW_UP`, `DID_NOT_CONNECT`, `BAD_LEAD`, or `SALE_DONE`. |
-| **CRM Schema Rules** | Allowed Data Sources | **Met** | Limits values to `leads_on_demand`, `meridian_tower`, `eden_park`, `varah_swamy`, `sarjapur_plots`. |
-| **CRM Schema Rules** | Date Normalization | **Met** | Converts dates to ISO-8601 strings compatible with `new Date(created_at)`. |
-| **CRM Schema Rules** | Multiple Emails/Phones | **Met** | Selects the first value; appends the rest to `crm_note`. |
-| **CRM Schema Rules** | Skip Invalid Records | **Partially Met** | Strips invalid rows on bad names/emails. *Detail below.* |
-
----
-
 ## What Extra I've Done
 
 To make the application production-ready, I implemented several features that go far beyond a basic MVP, that sets me apart:
@@ -146,26 +129,6 @@ To make the application production-ready, I implemented several features that go
 
 7. **Docker Multi-Container Orchestration**
    - Docker Compose file configured to start the frontend client and backend API as isolated, networked services with a single command.
-
----
-
-## Deviations & Design Decisions
-
-### 1. Missing "No Email AND No Mobile" Exclusion Rule
-* **Context Requirement**: *Skip any record that has no email AND no mobile number.*
-* **Current State**: The backend validator (`validation.service.ts`) checks for required names, cleans invalid email patterns, and normalizes phone digits. However, **it does not explicitly drop rows that lack both email and phone numbers**. Instead, it passes them through as partial records or issues warnings.
-* **Why it was missed/handled this way**: The LLM prompt was instructed to map fields and output empty strings for missing items. During validation processing, the filter logic failed to reject rows where *both* parameters normalized to empty strings. This is a known gap in `validation.service.ts` that can be resolved by adding a simple check:
-  ```typescript
-  if (!email && !mobileDigits) {
-    errors.push("Record skipped: must contain at least an email or a mobile number.");
-  }
-  ```
-
-### 2. Hybrid Normalization (Deterministic + AI-Driven)
-* **Design Decision**: Instead of relying 100% on the LLM to format dates and handle status strings (which is prone to hallucinations or format deviations), the system is built as a **hybrid processor**. 
-  - The AI suggests matching categories and extracts the text.
-  - A deterministic TS validation layer (`NormalizationService`) sanitizes the date parseability, parses complex telephone prefixes, and enforces exact enum capitalization rules.
-  - This separation of concerns ensures that the data imported is structurally bulletproof.
 
 ---
 
